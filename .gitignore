@@ -23,8 +23,10 @@ build/
 
 # Environment variables
 .env
+.env.production
 .env.local
 .env.*.local
+production.env
 
 # IDE and editor files
 .idea/

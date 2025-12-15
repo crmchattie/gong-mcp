@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv('production.env')
 
 # JWT Configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "supersecret")
@@ -6,8 +10,8 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_VALIDITY = os.getenv("JWT_VALIDITY", 86400 * 7)
 
 # Gong API Configuration
-BASE_URL = "https://mcp.gong.io"
-GONG_API_URL = "https://api.gong.io/v2"
+BASE_URL = os.getenv("BASE_URL", "https://mcp.gong.io")
+GONG_API_URL = "https://us-2845.api.gong.io/v2"
 
 # Gong API Endpoints
 GONG_CALLS_API = f"{GONG_API_URL}/calls"

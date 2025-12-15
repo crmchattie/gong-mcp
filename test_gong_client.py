@@ -41,7 +41,7 @@ class GongClient:
         from datetime import datetime
         import base64
 
-        GONG_API_URL = "https://api.gong.io/v2"
+        GONG_API_URL = "https://us-2845.api.gong.io/v2"
         timestamp = datetime.utcnow().isoformat() + "Z"
         url = f"{GONG_API_URL}{path}"
 

@@ -14,7 +14,7 @@ load_dotenv()
 # Gong API Configuration
 GONG_ACCESS_KEY = os.getenv("GONG_ACCESS_KEY")
 GONG_ACCESS_SECRET = os.getenv("GONG_ACCESS_SECRET")
-GONG_API_URL = "https://api.gong.io/v2"
+GONG_API_URL = "https://us-2845.api.gong.io/v2"
 
 
 class GongAPIClient:

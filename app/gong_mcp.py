@@ -102,12 +102,18 @@ async def list_calls(
         to_datetime: End date/time in ISO format (e.g. 2024-03-31T23:59:59Z)
     """
     # Get user from context if available (for tracking and authentication)
+    # Note: HTTP request context is only available when running as HTTP server,
+    # not when running in stdio mode (e.g., Claude Desktop)
     user = None
     if ctx:
-        request = ctx.get_http_request()
-        user = AuthService.get_user_from_request(request)
-        if not user:
-            return "Token expired. Please refresh the page and reconnect to Daloopa's MCP"
+        try:
+            request = ctx.get_http_request()
+            user = AuthService.get_user_from_request(request)
+            if not user:
+                return "Token expired. Please refresh the page and reconnect to Daloopa's MCP"
+        except Exception:
+            # Running in stdio mode - no HTTP context available, continue without user tracking
+            pass
     
     try:
         # Validate arguments
@@ -150,12 +156,18 @@ async def retrieve_transcripts(
         call_ids: Array of Gong call IDs to retrieve transcripts for
     """
     # Get user from context if available (for tracking and authentication)
+    # Note: HTTP request context is only available when running as HTTP server,
+    # not when running in stdio mode (e.g., Claude Desktop)
     user = None
     if ctx:
-        request = ctx.get_http_request()
-        user = AuthService.get_user_from_request(request)
-        if not user:
-            return "Token expired. Please refresh the page and reconnect to Daloopa's MCP"
+        try:
+            request = ctx.get_http_request()
+            user = AuthService.get_user_from_request(request)
+            if not user:
+                return "Token expired. Please refresh the page and reconnect to Daloopa's MCP"
+        except Exception:
+            # Running in stdio mode - no HTTP context available, continue without user tracking
+            pass
     
     try:
         # Validate arguments
