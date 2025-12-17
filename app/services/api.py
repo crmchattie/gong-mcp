@@ -77,53 +77,73 @@ class GongAPIClient:
 
 class APIService:
     """API Service for Gong integration."""
-    
-    # Initialize Gong client if credentials are available
-    _gong_client = None
-    if GONG_ACCESS_KEY and GONG_ACCESS_SECRET:
-        _gong_client = GongAPIClient(GONG_ACCESS_KEY, GONG_ACCESS_SECRET)
 
     @classmethod
     async def get_gong_calls(
-        cls, 
-        from_datetime: Optional[str] = None, 
-        to_datetime: Optional[str] = None
+        cls,
+        from_datetime: Optional[str] = None,
+        to_datetime: Optional[str] = None,
+        access_key: Optional[str] = None,
+        access_secret: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         List Gong calls with optional date range filtering.
-        
+
         Args:
             from_datetime: Start date/time in ISO format (e.g. 2024-03-01T00:00:00Z)
             to_datetime: End date/time in ISO format (e.g. 2024-03-31T23:59:59Z)
-            
+            access_key: Gong API access key (if not provided, uses environment variable)
+            access_secret: Gong API access secret (if not provided, uses environment variable)
+
         Returns:
             Dict containing call data from Gong API
         """
-        if not cls._gong_client:
+        # Use provided credentials or fall back to environment variables
+        key = access_key or GONG_ACCESS_KEY
+        secret = access_secret or GONG_ACCESS_SECRET
+
+        if not key or not secret:
             raise ValueError("Gong API credentials not configured")
-            
+
+        # Create a client with the provided credentials
+        client = GongAPIClient(key, secret)
+
         params = {}
         if from_datetime:
             params["fromDateTime"] = from_datetime
         if to_datetime:
             params["toDateTime"] = to_datetime
 
-        return await cls._gong_client._request("GET", "/calls", params=params)
+        return await client._request("GET", "/calls", params=params)
 
     @classmethod
-    async def get_gong_transcripts(cls, call_ids: List[str]) -> Dict[str, Any]:
+    async def get_gong_transcripts(
+        cls,
+        call_ids: List[str],
+        access_key: Optional[str] = None,
+        access_secret: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Retrieve transcripts for specified call IDs.
-        
+
         Args:
             call_ids: List of Gong call IDs to retrieve transcripts for
-            
+            access_key: Gong API access key (if not provided, uses environment variable)
+            access_secret: Gong API access secret (if not provided, uses environment variable)
+
         Returns:
             Dict containing transcript data from Gong API
         """
-        if not cls._gong_client:
+        # Use provided credentials or fall back to environment variables
+        key = access_key or GONG_ACCESS_KEY
+        secret = access_secret or GONG_ACCESS_SECRET
+
+        if not key or not secret:
             raise ValueError("Gong API credentials not configured")
-            
+
+        # Create a client with the provided credentials
+        client = GongAPIClient(key, secret)
+
         data = {
             "filter": {
                 "callIds": call_ids,
@@ -133,4 +153,4 @@ class APIService:
             }
         }
 
-        return await cls._gong_client._request("POST", "/calls/transcript", data=data)
+        return await client._request("POST", "/calls/transcript", data=data)

@@ -1,34 +1,55 @@
+import base64
 from fastapi import Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from app.database import DBAsyncSession
-from app.services.auth import AuthService
-from app.services.user import UserService
-
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
+    """
+    Simple authentication middleware that extracts Gong credentials from HTTP Basic Auth.
+    Users provide their Gong Access Key as Client ID and Gong Access Secret as Client Secret.
+    """
     async def dispatch(self, request: Request, call_next):
         scope_path = request.scope["path"]
-        body = await request.body()
-        print(f"[AuthenticationMiddleware] Request path: {scope_path}, Body: {body}")
-        
-        if not (scope_path.endswith("/sse") 
+
+        # Only apply authentication to the /mcp or /sse paths
+        if not (scope_path.endswith("/sse")
                 or scope_path.endswith("/mcp")
                 or scope_path.endswith("/mcp/")
             ):
-            # Only apply authentication to the /mcp or /sse paths
             return await call_next(request)
-        
-        user = AuthService.get_user_from_request(request)
-        if user is None:
-            return Response(status_code=401, content="Unauthorized")
 
-        # Validate if the user has MCP access
-        async with DBAsyncSession() as session:
-            has_mcp_access = await UserService(session).has_mcp_access(user["sub"])
-            if not has_mcp_access:
-                return Response(status_code=403, content="Forbidden")
+        # Extract credentials from Authorization header (HTTP Basic Auth)
+        auth_header = request.headers.get("Authorization", "")
+
+        if not auth_header.startswith("Basic "):
+            return Response(
+                status_code=401,
+                content="Unauthorized: Missing or invalid Authorization header. Please provide Gong credentials via HTTP Basic Auth.",
+                headers={"WWW-Authenticate": "Basic realm=\"Gong MCP Server\""}
+            )
+
+        try:
+            # Decode Basic Auth credentials
+            encoded_credentials = auth_header.replace("Basic ", "")
+            decoded_bytes = base64.b64decode(encoded_credentials)
+            decoded_str = decoded_bytes.decode("utf-8")
+
+            # Split into access_key:access_secret
+            if ":" not in decoded_str:
+                return Response(status_code=401, content="Unauthorized: Invalid credentials format")
+
+            access_key, access_secret = decoded_str.split(":", 1)
+
+            # Store credentials in request state for use by the MCP tools
+            request.state.gong_access_key = access_key
+            request.state.gong_access_secret = access_secret
+
+        except Exception as e:
+            return Response(
+                status_code=401,
+                content=f"Unauthorized: Failed to decode credentials - {str(e)}"
+            )
 
         response = await call_next(request)
         return response
